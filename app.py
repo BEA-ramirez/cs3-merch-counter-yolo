@@ -19,6 +19,7 @@ CORS(app)
 # model.predict(source=dummy_image, imgsz=640, conf=0.01, verbose=False)
 
 def get_model():
+    model_path = 'best.pt'
     if not hasattr(get_model, "model"):
         get_model.model = YOLO(model_path)
     return get_model.model
