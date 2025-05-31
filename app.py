@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load YOLO model using Ultralytics
-model_path = 'best.onnx'
+model_path = 'best.pt'
 model = YOLO(model_path)
 
 # We'll use model.names for class names - the same way as in the Colab implementation
