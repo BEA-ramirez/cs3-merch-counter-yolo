@@ -12,11 +12,16 @@ app = Flask(__name__)
 CORS(app)
 
 # Load YOLO model using Ultralytics
-model_path = 'best.pt'
-model = YOLO(model_path)
+# model_path = 'best.pt'
+# model = YOLO(model_path)
 
-dummy_image = np.zeros((640, 640, 3), dtype=np.uint8)
-model.predict(source=dummy_image, imgsz=640, conf=0.01, verbose=False)
+# dummy_image = np.zeros((640, 640, 3), dtype=np.uint8)
+# model.predict(source=dummy_image, imgsz=640, conf=0.01, verbose=False)
+
+def get_model():
+    if not hasattr(get_model, "model"):
+        get_model.model = YOLO(model_path)
+    return get_model.model
 
 def compress_image_keep_aspect(image, max_size=1280, quality=70):
     """Compress image while maintaining aspect ratio."""
@@ -65,7 +70,7 @@ def predict():
         img = Image.open(temp_path).convert('RGB')
         original_width, original_height = img.size
 
-        
+        model = get_model()
         # Run prediction with Ultralytics
         results = model.predict(source=temp_path, conf=0.55)  # Using same confidence threshold as in Colab
         
