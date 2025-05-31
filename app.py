@@ -15,6 +15,8 @@ CORS(app)
 model_path = 'best.pt'
 model = YOLO(model_path)
 
+dummy_image = np.zeros((640, 640, 3), dtype=np.uint8)
+model.predict(source=dummy_image, imgsz=640, conf=0.01, verbose=False)
 # We'll use model.names for class names - the same way as in the Colab implementation
 
 @app.route('/predict', methods=['POST'])
