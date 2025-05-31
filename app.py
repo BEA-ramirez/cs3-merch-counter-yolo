@@ -12,12 +12,27 @@ app = Flask(__name__)
 CORS(app)
 
 # Load YOLO model using Ultralytics
-model_path = 'best.onnx'
+model_path = 'best.pt'
 model = YOLO(model_path)
 
 dummy_image = np.zeros((640, 640, 3), dtype=np.uint8)
 model.predict(source=dummy_image, imgsz=640, conf=0.01, verbose=False)
-# We'll use model.names for class names - the same way as in the Colab implementation
+
+def compress_image_keep_aspect(image, max_size=1280, quality=70):
+    """Compress image while maintaining aspect ratio."""
+    original_width, original_height = image.size
+
+    # Determine scaling factor
+    scale = min(max_size / original_width, max_size / original_height, 1.0)
+    new_width = int(original_width * scale)
+    new_height = int(original_height * scale)
+
+    resized_img = image.resize((new_width, new_height), Image.LANCZOS)
+
+    # Save to temp file
+    compressed_path = 'compressed_image.jpg'
+    resized_img.save(compressed_path, format='JPEG', quality=quality)
+    return compressed_path
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -34,6 +49,22 @@ def predict():
         # Load original image for dimensions and drawing
         img = Image.open(temp_path).convert('RGB')
         original_width, original_height = img.size
+
+        # Attempt compression
+        try:
+            img = Image.open(file).convert('RGB')
+            temp_path = compress_image_keep_aspect(img)
+        except Exception as compression_error:
+            print("Compression failed:", compression_error)
+            file.stream.seek(0)
+            fallback_path = 'original_image.jpg'
+            file.save(fallback_path)
+            temp_path = fallback_path
+
+        # Load compressed or fallback image
+        img = Image.open(temp_path).convert('RGB')
+        original_width, original_height = img.size
+
         
         # Run prediction with Ultralytics
         results = model.predict(source=temp_path, conf=0.55)  # Using same confidence threshold as in Colab
@@ -124,11 +155,12 @@ def predict():
         processed_image.save(buffer, format="JPEG")
         img_str = base64.b64encode(buffer.getvalue()).decode()
         
-        # Clean up temporary file
-        try:
-            os.remove(temp_path)
-        except:
-            pass
+        # Clean up
+        for path in ['compressed_image.jpg', 'original_image.jpg']:
+            try:
+                os.remove(path)
+            except:
+                pass
 
        
         
