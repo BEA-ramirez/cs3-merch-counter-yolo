@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load YOLO model using Ultralytics
-model_path = 'best.pt'
+model_path = 'best.onnx'
 model = YOLO(model_path)
 
 dummy_image = np.zeros((640, 640, 3), dtype=np.uint8)
